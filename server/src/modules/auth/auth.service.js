@@ -5,7 +5,11 @@ import { sendEmail } from "../../services/email/email.service.js";
 import { otpTemplate } from "../../services/email/templates/otp.template.js";
 import { NotFoundError } from "../../utils/apiError.js";
 import { generateOtp } from "../../utils/otp.js";
-import { generateTokenPair, verifyRefreshToken } from "../../utils/token.js";
+import {
+  generateAccessToken,
+  generateTokenPair,
+  verifyRefreshToken,
+} from "../../utils/token.js";
 
 export const sendOtp = async (data) => {
   const { email, role } = data;

@@ -77,7 +77,7 @@ export const logout = asyncHandler(async (req, res) => {
   const refreshToken = req.cookies?.refreshToken;
 
   if (refreshToken) {
-    await AuthService.revokeRefreshToken(refreshToken);
+    await AuthService.refreshToken(refreshToken);
   }
 
   res.clearCookie("accessToken");

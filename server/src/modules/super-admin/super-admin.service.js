@@ -68,7 +68,7 @@ export const createClinicInvitation = async (payload, inviterId) => {
 
   // Send an email to the clinic with the onboarding link containing the token.
 
-  const onboardingUrl = `${config.CLIENT_URL}/clinic-onboarding?token=${token}`;
+  const onboardingUrl = `${config.CLIENT_URL}/onboarding/${token}`;
 
   await sendEmail({
     to: email,
