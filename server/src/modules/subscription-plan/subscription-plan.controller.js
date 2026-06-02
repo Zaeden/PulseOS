@@ -1,6 +1,6 @@
 import STATUS_CODES from "../../constants/statusCode.js";
-import ApiResponse from "../../utils/apiResponse";
-import asyncHandler from "../../utils/asyncHandler";
+import ApiResponse from "../../utils/apiResponse.js";
+import asyncHandler from "../../utils/asyncHandler.js";
 import * as subscriptionPlanService from "./subscription-plan.service.js";
 
 export const getSubscriptionPlans = asyncHandler(async (req, res) => {

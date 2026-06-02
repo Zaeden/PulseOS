@@ -1,6 +1,6 @@
 import { Router } from "express";
 import authRouter from "../../modules/auth/auth.route.js";
-import superAdminRouter from "../../modules/super-admin/superAdmin.route.js";
+import superAdminRouter from "../../modules/super-admin/super-admin.route.js";
 import subscriptionPlanRouter from "../../modules/subscription-plan/subscription-plan.route.js";
 
 const v1Router = Router();

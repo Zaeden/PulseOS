@@ -8,7 +8,7 @@ export const createClinicInvitation = asyncHandler(async (req, res) => {
 
   const invitation = await SuperAdminService.createClinicInvitation(
     payload,
-    req.user.id,
+    req.user.sub,
   );
 
   return res

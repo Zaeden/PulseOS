@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { authenticate } from "../../middlewares/auth.middleware.s";
+import { authenticate } from "../../middlewares/auth.middleware.js";
 import validate from "../../middlewares/validate.middleware.js";
 import { authorize } from "../../middlewares/authorize.middleware.js";
 import { createClinicInvitationSchema } from "./super-admin.dto.js";

@@ -18,6 +18,7 @@ export const sendOtp = async (data) => {
       role: true,
     },
   });
+
   if (!user) {
     throw new BadRequestError("User not found");
   }

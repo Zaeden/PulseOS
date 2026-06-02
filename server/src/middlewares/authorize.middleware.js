@@ -13,5 +13,6 @@ export const authorize = (allowedRoles) => {
           ),
         );
     }
+    next();
   };
 };
