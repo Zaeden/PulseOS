@@ -1,0 +1,324 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+  PENDING
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  TRIAL
+  EXPIRED
+  SUSPENDED
+  CANCELLED
+}
+
+enum ClinicStatus {
+  PENDING
+  ACTIVE
+  SUSPENDED
+  REJECTED
+}
+
+enum ClinicDocumentType {
+  REGISTRATION_CERTIFICATE
+  MEDICAL_LICENSE
+  TAX_CERTIFICATE
+  OWNER_ID_PROOF
+  ADDRESS_PROOF
+  OTHER
+}
+
+enum ClinicDocumentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum ClinicInvitationStatus {
+  PENDING
+  ACCEPTED
+  EXPIRED
+  CANCELLED
+}
+
+enum ClinicOnboardingStatus {
+  INVITED
+  IN_PROGRESS
+  SUBMITTED
+  UNDER_REVIEW
+  REJECTED
+  APPROVED
+}
+
+model User {
+  id            String     @id @default(uuid()) @db.Uuid
+  clinicId      String?    @db.Uuid
+  roleId        String     @db.Uuid
+  firstName     String     @map("first_name")
+  lastName      String     @map("last_name")
+  email         String     @unique
+  phone         String?
+  profileImage  String?    @map("profile_image")
+  status        UserStatus @default(PENDING)
+  emailVerified Boolean    @default(false) @map("email_verified")
+  lastLoginAt   DateTime?  @map("last_login_at")
+  createdBy     String?    @map("created_by") @db.Uuid
+  createdAt     DateTime   @default(now()) @map("created_at")
+  updatedAt     DateTime   @updatedAt @map("updated_at")
+  deletedAt     DateTime?  @map("deleted_at")
+
+  // Relationships
+  clinic                  Clinic?            @relation(fields: [clinicId], references: [id])
+  role                    Role               @relation(fields: [roleId], references: [id])
+  creator                 User?              @relation("UserCreatedBy", fields: [createdBy], references: [id])
+  createdUsers            User[]             @relation("UserCreatedBy")
+  refreshTokens           RefreshToken[]
+  uploadedClinicDocuments ClinicDocument[]   @relation("ClinicDocumentUploader")
+  reviewedClinicDocuments ClinicDocument[]   @relation("ClinicDocumentReviewer")
+  clinicInvitations       ClinicInvitation[]
+  reviewedClinics         Clinic[]           @relation("ClinicReviewer")
+
+  // Indexes
+  @@index([clinicId])
+  @@index([roleId])
+  @@index([createdBy])
+  @@index([status])
+  @@index([clinicId, roleId])
+  @@map("users")
+}
+
+model Role {
+  id          String   @id @default(uuid()) @db.Uuid
+  name        String
+  slug        String   @unique
+  description String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Relationships
+  users           User[]
+  rolePermissions RolePermission[]
+
+  // Indexes
+  @@index([slug])
+  @@map("roles")
+}
+
+model Permission {
+  id          String   @id @default(uuid()) @db.Uuid
+  name        String
+  slug        String   @unique
+  module      String
+  description String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Relationships
+  rolePermissions RolePermission[]
+
+  // Indexes
+  @@index([slug])
+  @@index([module])
+  @@map("permissions")
+}
+
+model RolePermission {
+  id           String   @id @default(uuid()) @db.Uuid
+  roleId       String   @map("role_id") @db.Uuid
+  permissionId String   @map("permission_id") @db.Uuid
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  // Relations
+  role       Role       @relation(fields: [roleId], references: [id])
+  permission Permission @relation(fields: [permissionId], references: [id])
+
+  @@unique([roleId, permissionId])
+  // Indexes
+  @@index([roleId])
+  @@index([permissionId])
+  @@map("role_permissions")
+}
+
+model RefreshToken {
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  token     String    @unique
+  expiresAt DateTime  @map("expires_at")
+  revokedAt DateTime? @map("revoked_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id])
+
+  // Indexes
+  @@index([userId])
+  @@index([token])
+  @@map("refresh_tokens")
+}
+
+// Model for defining different subscripton plans like Trial, Basic, Premium
+model SubscriptionPlan {
+  id           String   @id @default(uuid()) @db.Uuid
+  name         String
+  slug         String   @unique
+  description  String?
+  monthlyPrice Decimal  @map("monthly_price") @db.Decimal(10, 2)
+  doctorLimit  Int?     @map("doctor_limit")
+  trialDays    Int?     @map("trial_days")
+  isCustom     Boolean  @default(false) @map("is_custom")
+  features     Json?
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  // Relationships
+  subscriptions     Subscription[]
+  clinicInvitations ClinicInvitation[]
+
+  @@index([slug])
+  @@index([isActive])
+  @@map("subscription_plans")
+}
+
+// Model to store actual clinic's subscription plans
+model Subscription {
+  id                 String             @id @default(uuid()) @db.Uuid
+  clinicId           String             @map("clinic_id") @db.Uuid
+  subscriptionPlanId String             @map("subscription_plan_id") @db.Uuid
+  status             SubscriptionStatus @default(TRIAL)
+  startsAt           DateTime           @map("starts_at")
+  expiresAt          DateTime           @map("expires_at")
+  cancelledAt        DateTime?          @map("cancelled_at")
+
+  // For custom plans
+  customDoctorLimit  Int?     @map("custom_doctor_limit")
+  customMonthlyPrice Decimal? @map("custom_monthly_price") @db.Decimal(10, 2)
+  customFeatures     Json?    @map("custom_features")
+  notes              String?
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  clinic           Clinic           @relation(fields: [clinicId], references: [id])
+  subscriptionPlan SubscriptionPlan @relation(fields: [subscriptionPlanId], references: [id])
+
+  // Indexes
+  @@index([clinicId])
+  @@index([subscriptionPlanId])
+  @@index([status])
+  @@index([expiresAt])
+  @@map("subscriptions")
+}
+
+model Clinic {
+  id                    String                 @id @default(uuid()) @db.Uuid
+  name                  String
+  slug                  String                 @unique
+  legalName             String?                @map("legal_name")
+  email                 String?                @unique
+  phone                 String?
+  website               String?
+  logo                  String?
+  registrationNumber    String?                @map("registration_number")
+  taxIdentifier         String?                @map("tax_identifier")
+  addressLine1          String?                @map("address_line_1")
+  addressLine2          String?                @map("address_line_2")
+  city                  String?
+  state                 String?
+  country               String?
+  postalCode            String?                @map("postal_code")
+  status                ClinicStatus           @default(PENDING)
+  approvedAt            DateTime?              @map("approved_at")
+  rejectedReason        String?                @map("rejected_reason")
+  onboardingStatus      ClinicOnboardingStatus @default(INVITED) @map("onboarding_status")
+  createdAt             DateTime               @default(now()) @map("created_at")
+  updatedAt             DateTime               @updatedAt @map("updated_at")
+  deletedAt             DateTime?              @map("deleted_at")
+  onboardingSubmittedAt DateTime?              @map("onboarding_submitted_at")
+  reviewedAt            DateTime?              @map("reviewed_at")
+  reviewedBy            String?                @map("reviewed_by") @db.Uuid
+
+  // Relationships
+  users             User[]
+  subscriptions     Subscription[]
+  clinicDocuments   ClinicDocument[]
+  clinicInvitations ClinicInvitation[]
+  reviewer          User?              @relation("ClinicReviewer", fields: [reviewedBy], references: [id])
+
+  // Indexes
+  @@index([slug])
+  @@index([status])
+  @@index([city])
+  @@index([country])
+  @@map("clinics")
+}
+
+model ClinicDocument {
+  id                String               @id @default(uuid()) @db.Uuid
+  clinicId          String               @map("clinic_id") @db.Uuid
+  type              ClinicDocumentType
+  customLabel       String?              @map("custom_label")
+  fileName          String               @map("file_name")
+  fileUrl           String               @map("file_url")
+  mimeType          String?              @map("mime_type")
+  sizeInBytes       Int?                 @map("size_in_bytes")
+  status            ClinicDocumentStatus @default(PENDING)
+  rejectionReason   String?              @map("rejection_reason")
+  correctionComment String?              @map("correction_comment")
+  uploadedBy        String?              @map("uploaded_by") @db.Uuid
+  reviewedBy        String?              @map("reviewed_by") @db.Uuid
+  reviewedAt        DateTime?            @map("reviewed_at")
+  createdAt         DateTime             @default(now()) @map("created_at")
+  updatedAt         DateTime             @updatedAt @map("updated_at")
+  resubmittedAt     DateTime?            @map("resubmitted_at")
+
+  // Relationships
+  clinic   Clinic @relation(fields: [clinicId], references: [id])
+  uploader User?  @relation("ClinicDocumentUploader", fields: [uploadedBy], references: [id])
+  reviewer User?  @relation("ClinicDocumentReviewer", fields: [reviewedBy], references: [id])
+
+  // Indexes
+  @@index([clinicId])
+  @@index([type])
+  @@index([status])
+  @@map("clinic_documents")
+}
+
+model ClinicInvitation {
+  id                 String                 @id @default(uuid()) @db.Uuid
+  email              String
+  token              String                 @unique
+  status             ClinicInvitationStatus @default(PENDING)
+  clinicId           String?                @map("clinic_id") @db.Uuid
+  subscriptionPlanId String                 @map("subscription_plan_id") @db.Uuid
+  doctorLimit        Int?                   @map("doctor_limit")
+  customMonthlyPrice Decimal?               @map("custom_monthly_price") @db.Decimal(10, 2)
+  invitedBy          String                 @map("invited_by") @db.Uuid
+  customTrialDays    Int?                   @map("custom_trial_days")
+  expiresAt          DateTime               @map("expires_at")
+  acceptedAt         DateTime?              @map("accepted_at")
+  createdAt          DateTime               @default(now()) @map("created_at")
+  updatedAt          DateTime               @updatedAt @map("updated_at")
+
+  // Relationships
+  clinic           Clinic?          @relation(fields: [clinicId], references: [id])
+  subscriptionPlan SubscriptionPlan @relation(fields: [subscriptionPlanId], references: [id])
+  inviter          User             @relation(fields: [invitedBy], references: [id])
+
+  // Indexes
+
+  @@index([email])
+  @@index([token])
+  @@index([status])
+  @@map("clinic_invitations")
+}
