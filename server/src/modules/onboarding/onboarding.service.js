@@ -6,9 +6,6 @@ export const getInvitationByToken = async (token) => {
     where: {
       token,
     },
-    include: {
-      subscriptionPlan: true,
-    },
   });
 
   if (!invitation) {
@@ -25,16 +22,8 @@ export const getInvitationByToken = async (token) => {
 
   return {
     email: invitation.email,
-    subscriptionPlan: {
-      id: invitation.subscriptionPlan.id,
-      name: invitation.subscriptionPlan.name,
-    },
-    customTrialDays:
-      invitation.customTrialDays ?? invitation.subscriptionPlan.trialDays,
-    doctorLimit:
-      invitation.doctorLimit ?? invitation.subscriptionPlan.doctorLimit,
-    customMonthlyPrice:
-      invitation.customMonthlyPrice ?? invitation.subscriptionPlan.monthlyPrice,
+    customTrialDays: invitation.customTrialDays,
+    doctorLimit: invitation.doctorLimit,
   };
 };
 

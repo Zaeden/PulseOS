@@ -6,24 +6,7 @@ import { config } from "../../configs/env.js";
 import { clinicInvitationTemplate } from "../../services/email/templates/clinic-invitation.template.js";
 
 export const createClinicInvitation = async (payload, inviterId) => {
-  const {
-    email,
-    subscriptionPlanId,
-    customTrialDays,
-    doctorLimit,
-    customMonthlyPrice,
-  } = payload;
-
-  // Check if the subscription plan exists or not.
-  const plan = await prisma.subscriptionPlan.findUnique({
-    where: {
-      id: subscriptionPlanId,
-    },
-  });
-
-  if (!plan) {
-    throw new NotFoundError("Subscription plan not found");
-  }
+  const { email, hasTrial, customTrialDays, doctorLimit } = payload;
 
   // Check if an invitation with the same email already exists and is still pending.
   const existingInvitation = await prisma.clinicInvitation.findFirst({
@@ -56,11 +39,9 @@ export const createClinicInvitation = async (payload, inviterId) => {
   const invitation = await prisma.clinicInvitation.create({
     data: {
       email,
-      subscriptionPlanId,
       token,
-      customTrialDays,
-      doctorLimit,
-      customMonthlyPrice,
+      customTrialDays: hasTrial ? customTrialDays : null,
+      doctorLimit: hasTrial ? doctorLimit : null,
       invitedBy: inviterId,
       expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
     },

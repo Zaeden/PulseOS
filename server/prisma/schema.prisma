@@ -300,7 +300,7 @@ model ClinicInvitation {
   token              String                 @unique
   status             ClinicInvitationStatus @default(PENDING)
   clinicId           String?                @map("clinic_id") @db.Uuid
-  subscriptionPlanId String                 @map("subscription_plan_id") @db.Uuid
+  subscriptionPlanId String?                @map("subscription_plan_id") @db.Uuid
   doctorLimit        Int?                   @map("doctor_limit")
   customMonthlyPrice Decimal?               @map("custom_monthly_price") @db.Decimal(10, 2)
   invitedBy          String                 @map("invited_by") @db.Uuid
@@ -311,9 +311,9 @@ model ClinicInvitation {
   updatedAt          DateTime               @updatedAt @map("updated_at")
 
   // Relationships
-  clinic           Clinic?          @relation(fields: [clinicId], references: [id])
-  subscriptionPlan SubscriptionPlan @relation(fields: [subscriptionPlanId], references: [id])
-  inviter          User             @relation(fields: [invitedBy], references: [id])
+  clinic           Clinic?           @relation(fields: [clinicId], references: [id])
+  subscriptionPlan SubscriptionPlan? @relation(fields: [subscriptionPlanId], references: [id])
+  inviter          User              @relation(fields: [invitedBy], references: [id])
 
   // Indexes
 

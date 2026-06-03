@@ -3,7 +3,7 @@ import { config } from "../../configs/env.js";
 import client from "../../configs/redis.js";
 import { sendEmail } from "../../services/email/email.service.js";
 import { otpTemplate } from "../../services/email/templates/otp.template.js";
-import { NotFoundError } from "../../utils/apiError.js";
+import { BadRequestError, NotFoundError } from "../../utils/apiError.js";
 import { generateOtp } from "../../utils/otp.js";
 import {
   generateAccessToken,
@@ -72,7 +72,7 @@ export const verifyOtp = async (data) => {
   }
 
   if (storedOtp !== otp) {
-    throw new BadRequestError("Invalid OTP");
+    throw new NotFoundError("Invalid OTP");
   }
 
   // Delete key from redis after successful verification.
