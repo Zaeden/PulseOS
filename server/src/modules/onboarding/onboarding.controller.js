@@ -12,3 +12,14 @@ export const getInvitationByToken = asyncHandler(async (req, res) => {
     .status(STATUS_CODES.OK)
     .json(new ApiResponse(true, "Invitation retrieved successfully", result));
 });
+
+export const createClinic = asyncHandler(async (req, res) => {
+  const { token } = req.params;
+  const payload = req.validatedBody;
+
+  const clinic = await OnboardingService.createClinic(token, payload);
+
+  return res
+    .status(STATUS_CODES.CREATED)
+    .json(new ApiResponse(true, "Clinic created", clinic));
+});

@@ -19,13 +19,15 @@ export const verifyOtp = asyncHandler(async (req, res) => {
 
   res.cookie("accessToken", result.accessToken, {
     httpOnly: true,
-    sameSite: "strict",
+    sameSite: "lax",
+    secure: false,
     maxAge: 15 * 60 * 1000,
   });
 
   res.cookie("refreshToken", result.refreshToken, {
     httpOnly: true,
-    sameSite: "strict",
+    sameSite: "lax",
+    secure: false,
     maxAge: 7 * 24 * 60 * 60 * 1000,
   });
 
@@ -64,7 +66,8 @@ export const refreshToken = asyncHandler(async (req, res) => {
 
   res.cookie("accessToken", result.accessToken, {
     httpOnly: true,
-    sameSite: "strict",
+    sameSite: "lax",
+    secure: false,
     maxAge: 15 * 60 * 1000,
   });
 

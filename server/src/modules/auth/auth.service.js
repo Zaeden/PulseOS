@@ -12,7 +12,7 @@ import {
 } from "../../utils/token.js";
 
 export const sendOtp = async (data) => {
-  const { email, role } = data;
+  const { email } = data;
 
   const user = await prisma.user.findUnique({
     where: {
@@ -25,10 +25,6 @@ export const sendOtp = async (data) => {
 
   if (!user) {
     throw new BadRequestError("User not found");
-  }
-
-  if (user.role.slug !== role) {
-    throw new BadRequestError("Invalid role selected");
   }
 
   // Geneate a new otp.
@@ -52,7 +48,7 @@ export const sendOtp = async (data) => {
 };
 
 export const verifyOtp = async (data) => {
-  const { email, role, otp } = data;
+  const { email, otp } = data;
 
   const user = await prisma.user.findUnique({
     where: {
@@ -62,12 +58,9 @@ export const verifyOtp = async (data) => {
       role: true,
     },
   });
+
   if (!user) {
     throw new NotFoundError("User not found");
-  }
-
-  if (user.role.slug !== role) {
-    throw new BadRequestError("Invalid role selected");
   }
 
   const key = `otp:${email}`;
