@@ -32,9 +32,6 @@ export const createClinic = async (token, payload) => {
     where: {
       token,
     },
-    include: {
-      subscriptionPlan: true,
-    },
   });
 
   if (!invitation) {
